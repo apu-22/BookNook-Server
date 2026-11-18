@@ -20,7 +20,8 @@ export async function connectToMongoDB() {
         console.log("You successfully connected to MongoDB!");
         return client;
     } catch (err) {
-        console.dir(err);
+        console.error("Failed to connect to MongoDB:", err);
+        process.exit(1);
     }
 }
 
@@ -45,15 +46,21 @@ app.get("/all-books", async (req, res) => {
             data: books,
         });
     } catch (error) {
-        console.log("error", error);
+        console.error("Error fetching books:", error);
+        res.status(500).json({ message: "Failed to fetch books" });
     }
-})
+});
 
 
 //get details books api
 app.get("/all-books/:id", async (req, res) => {
     try {
         const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid book ID format" });
+        }
+
         const result = await booksCollection.findOne({ _id: new ObjectId(id) });
 
         if (!result) {
@@ -62,10 +69,10 @@ app.get("/all-books/:id", async (req, res) => {
 
         res.status(200).json(result);
     } catch (error) {
-        console.log("Error", error);
+        console.error("Error fetching book details:", error);
         res.status(500).json({ message: "Failed to fetch book details" });
     }
-})
+});
 
 
 //get books based on email
@@ -128,6 +135,7 @@ app.post("/add-book", async (req, res) => {
     }
 })
 
-app.listen(8000, () => {
-    console.log("server running on port: 8000");
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+    console.log(`Server running on port: ${PORT}`);
 });
