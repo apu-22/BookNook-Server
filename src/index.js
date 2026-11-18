@@ -35,6 +35,21 @@ app.get("/", (req, res) => {
 });
 
 
+//get all books api
+app.get("/all-books", async (req, res) => {
+    try {
+        const books = await booksCollection.find().toArray();
+
+        res.status(200).json({
+            message: "send books",
+            data: books,
+        });
+    } catch (error) {
+        console.log("error", error);
+    }
+})
+
+
 //add books 
 app.post("/add-book", async (req, res) => {
     try {
