@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(cors());
 
 //initialize MongoDB Altas DB
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 
 const client = new MongoClient(process.env.MONGODB_URL);
 
@@ -46,6 +46,24 @@ app.get("/all-books", async (req, res) => {
         });
     } catch (error) {
         console.log("error", error);
+    }
+})
+
+
+//get details books api
+app.get("/all-books/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await booksCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!result) {
+            return res.status(404).json({ message: "Book not found" });
+        }
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.log("Error", error);
+        res.status(500).json({ message: "Failed to fetch book details" });
     }
 })
 
