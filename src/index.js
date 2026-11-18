@@ -68,6 +68,30 @@ app.get("/all-books/:id", async (req, res) => {
 })
 
 
+//get books based on email
+app.get("/my-books", async (req, res) => {
+    try {
+        const email = req.query.email || req.query.userEmail;
+        if (!email) {
+            return res.status(200).json([]);
+        }
+
+        const query = {
+            $or: [
+                { userEmail: email },
+                { email: email }
+            ]
+        };
+
+        const result = await booksCollection.find(query).toArray();
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error fetching user books:", error);
+        res.status(500).json({ message: "Failed to fetch user books" });
+    }
+});
+
+
 //add books 
 app.post("/add-book", async (req, res) => {
     try {
