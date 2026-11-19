@@ -75,6 +75,43 @@ app.get("/all-books/:id", async (req, res) => {
 });
 
 
+//update book api
+app.patch("/all-books/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid book ID format" });
+        }
+
+        const updateData = { ...req.body };
+        delete updateData._id; // prevent updating immutable _id
+
+        if (updateData.totalCopies !== undefined) {
+            updateData.totalCopies = Number(updateData.totalCopies);
+        }
+
+        const result = await booksCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: updateData }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: "Book not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Book updated successfully",
+            modifiedCount: result.modifiedCount,
+        });
+    } catch (error) {
+        console.error("Error updating book:", error);
+        res.status(500).json({ message: "Failed to update book" });
+    }
+});
+
+
 //get books based on email
 app.get("/my-books", async (req, res) => {
     try {
