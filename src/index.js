@@ -12,6 +12,10 @@ app.use(express.json());
 app.use(cors());
 
 
+// JWKS initialized once so keys are cached in memory (prevents spamming Vercel /api/auth/jwks)
+const clientUrl = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+const JWKS = createRemoteJWKSet(new URL(`${clientUrl}/api/auth/jwks`));
+
 //verfiy token
 const validateToken = async (req, res, next) => {
 
@@ -33,13 +37,13 @@ const validateToken = async (req, res, next) => {
     })
   }
 
-  const clientUrl = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
-  const JWKS = createRemoteJWKSet(new URL(`${clientUrl}/api/auth/jwks`));
   try {
     const { payload } = await jwtVerify(token, JWKS)
+    req.user = payload;
     next()
   } catch (error) {
-    return res.status(500).send({
+    console.error("JWT verification error:", error?.message);
+    return res.status(401).send({
       success: false,
       message: "Token not verified"
     })
