@@ -1,16 +1,52 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-dotenv.config();
+import { MongoClient, ObjectId } from 'mongodb';
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
+dotenv.config();
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
+
+//verfiy token
+const validateToken = async (req, res, next) => {
+
+  const authToken = req.headers.authorization;
+
+  if (!authToken) {
+    return res.status(401).send({
+      success: false,
+      message: "You are not authorized"
+    })
+  }
+
+  const token = authToken.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).send({
+      success: false,
+      message: "You are not authorized"
+    })
+  }
+
+  const clientUrl = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+  const JWKS = createRemoteJWKSet(new URL(`${clientUrl}/api/auth/jwks`));
+  try {
+    const { payload } = await jwtVerify(token, JWKS)
+    next()
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: "Token not verified"
+    })
+  }
+}
+
 //initialize MongoDB Altas DB
-import { MongoClient, ObjectId } from 'mongodb';
 
 const client = new MongoClient(process.env.MONGODB_URL);
 
@@ -54,7 +90,7 @@ app.get("/all-books", async (req, res) => {
 
 
 //get details books api
-app.get("/all-books/:id", async (req, res) => {
+app.get("/all-books/:id",validateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -77,7 +113,7 @@ app.get("/all-books/:id", async (req, res) => {
 
 
 //update book api
-app.patch("/all-books/:id", async (req, res) => {
+app.patch("/all-books/:id",validateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -114,7 +150,7 @@ app.patch("/all-books/:id", async (req, res) => {
 
 
 //delete book api
-app.delete("/all-books/:id", async (req, res) => {
+app.delete("/all-books/:id", validateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -140,7 +176,7 @@ app.delete("/all-books/:id", async (req, res) => {
 
 
 //get books based on email
-app.get("/my-books", async (req, res) => {
+app.get("/my-books",validateToken, async (req, res) => {
     try {
         const email = req.query.email || req.query.userEmail;
         if (!email) {
@@ -164,7 +200,7 @@ app.get("/my-books", async (req, res) => {
 
 
 //add books 
-app.post("/add-book", async (req, res) => {
+app.post("/add-book",validateToken, async (req, res) => {
     try {
         const book = req.body;
 
@@ -216,7 +252,7 @@ app.get("/new-arrivals", async (req, res) => {
 
 
 //borrow books
-app.post("/borrow-book", async (req, res) => {
+app.post("/borrow-book",validateToken, async (req, res) => {
     try {
         const { bookId, bookTitle, bookImage, userEmail, userName, returnDate } = req.body;
 
@@ -287,7 +323,7 @@ app.post("/borrow-book", async (req, res) => {
 
 
 //get my-borrows book
-app.get("/my-borrows", async (req, res) => {
+app.get("/my-borrows",validateToken, async (req, res) => {
     try {
         const email = req.query.email || req.query.userEmail;
         if (!email) {
@@ -304,7 +340,7 @@ app.get("/my-borrows", async (req, res) => {
 
 
 //return book api
-app.delete("/my-borrows/:id", async (req, res) => {
+app.delete("/my-borrows/:id",validateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
