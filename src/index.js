@@ -30,6 +30,7 @@ const clientDB = await connectToMongoDB();
 const db = clientDB.db("BookNook");
 //create Books collection
 const booksCollection = db.collection("Books");
+const borrowsCollection = db.collection("borrows");
 
 app.get("/", (req, res) => {
     res.send("This is a simple book library management system.");
@@ -197,6 +198,77 @@ app.post("/add-book", async (req, res) => {
         });
     }
 })
+
+
+//borrow books
+app.post("/borrow-book", async (req, res) => {
+    try {
+        const { bookId, bookTitle, bookImage, userEmail, userName, returnDate } = req.body;
+
+        if (!bookId || !userEmail) {
+            return res.status(400).json({ message: "Book ID and User Email are required" });
+        }
+
+        if (!ObjectId.isValid(bookId)) {
+            return res.status(400).json({ message: "Invalid Book ID format" });
+        }
+
+        // 1. Check if book exists and has copies left
+        const book = await booksCollection.findOne({ _id: new ObjectId(bookId) });
+        if (!book) {
+            return res.status(404).json({ message: "Book not found" });
+        }
+
+        const copies = Number(book.totalCopies) || 0;
+        if (copies <= 0) {
+            return res.status(400).json({ message: "Sorry, this book is currently out of stock!" });
+        }
+
+        // 2. Check if user already borrowed this book
+        const existingBorrow = await borrowsCollection.findOne({
+            bookId: bookId,
+            userEmail: userEmail,
+        });
+
+        if (existingBorrow) {
+            return res.status(400).json({
+                message: "You have already borrowed this book! Please return it before borrowing again."
+            });
+        }
+
+        // 3. Create borrow record
+        const today = new Date().toISOString().split("T")[0];
+        const defaultReturn = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+        const borrowData = {
+            bookId,
+            bookTitle: bookTitle || book.title,
+            bookImage: bookImage || book.image || "",
+            userName: userName || "Anonymous Reader",
+            userEmail,
+            borrowDate: today,
+            returnDate: returnDate || defaultReturn,
+            borrowedAt: new Date(),
+        };
+
+        const result = await borrowsCollection.insertOne(borrowData);
+
+        // 4. Decrease book copies by 1
+        await booksCollection.updateOne(
+            { _id: new ObjectId(bookId) },
+            { $inc: { totalCopies: -1 } }
+        );
+
+        res.status(201).json({
+            success: true,
+            message: "Book borrowed successfully!",
+            insertedId: result.insertedId,
+        });
+    } catch (error) {
+        console.error("Error borrowing book:", error);
+        res.status(500).json({ message: "Failed to borrow book" });
+    }
+});
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
