@@ -112,6 +112,32 @@ app.patch("/all-books/:id", async (req, res) => {
 });
 
 
+//delete book api
+app.delete("/all-books/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid book ID format" });
+        }
+
+        const result = await booksCollection.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: "Book not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Book deleted successfully",
+        });
+    } catch (error) {
+        console.error("Error deleting book:", error);
+        res.status(500).json({ message: "Failed to delete book" });
+    }
+});
+
+
 //get books based on email
 app.get("/my-books", async (req, res) => {
     try {
