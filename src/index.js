@@ -270,6 +270,59 @@ app.post("/borrow-book", async (req, res) => {
     }
 });
 
+
+//get my-borrows book
+app.get("/my-borrows", async (req, res) => {
+    try {
+        const email = req.query.email || req.query.userEmail;
+        if (!email) {
+            return res.status(200).json([]);
+        }
+
+        const result = await borrowsCollection.find({ userEmail: email }).toArray();
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error fetching my-borrows:", error);
+        res.status(500).json({ message: "Failed to fetch my-borrows" });
+    }
+});
+
+
+//return book api
+app.delete("/my-borrows/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid ID format" });
+        }
+
+        const borrowRecord = await borrowsCollection.findOne({ _id: new ObjectId(id) });
+        if (!borrowRecord) {
+            return res.status(404).json({ message: "Borrow record not found" });
+        }
+
+        // 1. Delete borrow record
+        await borrowsCollection.deleteOne({ _id: new ObjectId(id) });
+
+        // 2. Increase totalCopies of the book by 1
+        if (borrowRecord.bookId && ObjectId.isValid(borrowRecord.bookId)) {
+            await booksCollection.updateOne(
+                { _id: new ObjectId(borrowRecord.bookId) },
+                { $inc: { totalCopies: 1 } }
+            );
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Book returned successfully!",
+        });
+    } catch (error) {
+        console.error("Error returning book:", error);
+        res.status(500).json({ message: "Failed to return book" });
+    }
+});
+
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
     console.log(`Server running on port: ${PORT}`);
