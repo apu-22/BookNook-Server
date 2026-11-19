@@ -199,6 +199,21 @@ app.post("/add-book", async (req, res) => {
     }
 })
 
+//get new arrivals books
+app.get("/new-arrivals", async (req, res) => {
+    try {
+        const result = await booksCollection
+            .find()
+            .sort({ addedAt: -1, _id: -1 })
+            .limit(6)
+            .toArray();
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error fetching new arrivals books:", error);
+        res.status(500).json({ message: "Failed to fetch new arrivals books" });
+    }
+});
+
 
 //borrow books
 app.post("/borrow-book", async (req, res) => {
