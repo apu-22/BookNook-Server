@@ -73,7 +73,197 @@ const booksCollection = db.collection("Books");
 const borrowsCollection = db.collection("borrows");
 
 app.get("/", (req, res) => {
-    res.send("This is a simple book library management system.");
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>BookNook API Server</title>
+        <link rel="icon" href="https://fav.farm/📚" />
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: radial-gradient(circle at top, #12281e 0%, #07170f 60%, #040d08 100%);
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+          }
+          .card {
+            background: rgba(18, 38, 29, 0.85);
+            border: 1px solid rgba(52, 211, 153, 0.25);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 36px 32px;
+            max-width: 540px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.1);
+            text-align: center;
+          }
+          .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            margin-bottom: 16px;
+          }
+          .pulse {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse 1.8s infinite;
+          }
+          @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+          }
+          h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+          }
+          p.subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 24px;
+          }
+          .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #86d39e;
+            color: #07170f;
+            padding: 11px 22px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(134, 211, 158, 0.3);
+          }
+          .btn:hover {
+            background: #72bf89;
+            transform: translateY(-1px);
+          }
+          .endpoints {
+            margin-top: 28px;
+            text-align: left;
+            background: #091711;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px 20px;
+          }
+          .endpoints-header {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #34d399;
+            margin-bottom: 10px;
+          }
+          .route {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          }
+          .route:last-child { border-bottom: none; }
+          .method {
+            font-weight: 700;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+          }
+          .method.get { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+          .method.post { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+          .path {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: #cbd5e1;
+            margin-left: 8px;
+            flex-grow: 1;
+          }
+          .desc {
+            font-size: 11px;
+            color: #64748b;
+          }
+          .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #64748b;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="badge">
+            <span class="pulse"></span>
+            API Status: Online & Healthy
+          </div>
+          <h1>📚 BookNook REST API</h1>
+          <p class="subtitle">
+            Secure and high-performance backend powering the BookNook community library platform.
+          </p>
+          <a class="btn" href="https://booknook-client-lilac.vercel.app" target="_blank" rel="noopener noreferrer">
+            🌐 Open Live Website &rarr;
+          </a>
+          <div class="endpoints">
+            <div class="endpoints-header">Available Primary Endpoints</div>
+            <div class="route">
+              <div>
+                <span class="method get">GET</span>
+                <span class="path">/all-books</span>
+              </div>
+              <span class="desc">Public Books</span>
+            </div>
+            <div class="route">
+              <div>
+                <span class="method get">GET</span>
+                <span class="path">/new-arrivals</span>
+              </div>
+              <span class="desc">Latest Titles</span>
+            </div>
+            <div class="route">
+              <div>
+                <span class="method post">POST</span>
+                <span class="path">/borrow-book</span>
+              </div>
+              <span class="desc">Protected (Auth)</span>
+            </div>
+            <div class="route">
+              <div>
+                <span class="method get">GET</span>
+                <span class="path">/my-borrows</span>
+              </div>
+              <span class="desc">Protected (Auth)</span>
+            </div>
+          </div>
+          <div class="footer">
+            Built with Express.js & MongoDB Atlas • BookNook
+          </div>
+        </div>
+      </body>
+    </html>
+    `);
 });
 
 
