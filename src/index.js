@@ -245,6 +245,13 @@ app.get("/", (req, res) => {
             <div class="route">
               <div>
                 <span class="method post">POST</span>
+                <span class="path">/add-book</span>
+              </div>
+              <span class="desc">Protected (Auth)</span>
+            </div>
+            <div class="route">
+              <div>
+                <span class="method post">POST</span>
                 <span class="path">/borrow-book</span>
               </div>
               <span class="desc">Protected (Auth)</span>
